@@ -71,6 +71,7 @@ def insert_data():
         VALUES (%s, %s);
         """
         cur.execute(sql_writer, (writer_id, writer_name))
+        
 
         
 
@@ -114,7 +115,7 @@ def insert_data():
         VALUES (%s, %s, %s);
         """
         cur.execute(sql_casts, (idcasts, idmovie, actor_id))
-
+        conn.commit()
         print("Netflix data inserted successfully.")
 
     except Exception as e:
@@ -342,6 +343,58 @@ def perform_grouping():
     for r in result:
         print(r)
 
+# Function to show all tables 
+def show_tables():
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        # Execute SQL query to retrieve table names
+        cur.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';")
+        tables = cur.fetchall()
+        table_names = [table[0] for table in tables]  # Extract table names from the result set
+        print("Tables in 'Netflix_schema':")
+        for name in table_names:
+            print(name)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    finally:
+        if conn:
+            cur.close()
+            conn.close()
+#List all data
+def list_Netflix_data():
+    print("Listing all Netflix data in one view...")
+    conn = get_connection()
+    cur = conn.cursor()
+
+    try:
+        # Execute a SQL query
+        query = """
+        SELECT m.idmovie, m.title, m.genre, m.tags, m.languages,  m.ty_type, m.country, m.runtime, m.boxoffice, m.y_o_r, m.netflix_release, m.summary, m.director_id, m.studio_id, c.idcasts, p.studio_name, d.fullname
+        FROM Movie m
+        LEFT JOIN casts c ON m.idmovie = c.idmovie
+        LEFT JOIN productionhouse p ON m.studio_id = p.studio_id
+        LEFT JOIN director d ON m.director_id = d.director_id
+        ORDER BY m.idmovie;
+        """
+        cur.execute(query)
+        record = cur.fetchall()
+        
+        # Print column headers
+        print("\nAll Netflix Data:")
+        headers = ["Movie ID", "Title", "Genre", "Languages", "Movie/Series", 
+                   "Country", "Runtime", 
+                   "Box Office", "Year of Release", "Netflix Release", "Summary", "Director ID", "Studio ID", "Casts ID", "Studio Name", "Director"]
+        print("\t".join(headers))
+
+        # Print each row of the data
+        for r in record:
+            print("\t".join(str(x) for x in r))
+
+    except Exception as e:
+        print("Failed to retrieve data:", e)
+    finally:
+        cur.close()
 # Transactions Example
 def manage_transaction():
     try:
@@ -411,15 +464,17 @@ def main_menu():
     print("9. Subqueries")
     print("10. Transactions")
     print("11. Error Handling")
-    print("12. Quit")
+    print("12. Show Tables")
+    print("13. Show Data")
+    print("14. Quit")
     
-    choice = input("Enter your choice (1-12): ")
+    choice = input("Enter your choice (1-14): ")
     return choice
 
 def main():
     while True:
         choice = main_menu()
-        if choice == '12':  # Quit is now option 12
+        if choice == '14':  
             print("Exiting the program.")
             break  # Exit the loop to quit the program
         elif choice == '1':
@@ -444,6 +499,12 @@ def main():
             manage_transaction()
         elif choice == '11':
             handle_error()
+        elif choice == '12':
+            show_tables()
+        elif choice == '13':
+            list_Netflix_data()
+
+
         else:
             print("Invalid option. Please try again.")
 
